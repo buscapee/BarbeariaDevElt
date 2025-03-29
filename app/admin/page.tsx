@@ -1,14 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import Header from "../_components/header"
+import { useState, useEffect } from "react"
 import { Button } from "../_components/ui/button"
 import { toast } from "sonner"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import { authOptions } from "../_lib/auth"
+import { getServerSession } from "next-auth"
 import { redirect } from "next/navigation"
+import { getUserRole } from "../_actions/get-user-role"
 
 interface Booking {
   id: string
@@ -27,32 +26,36 @@ interface Booking {
   }
 }
 
-export default async function AdminPage() {
-  const session = await getServerSession(authOptions)
-
-  if (!session?.user) {
-    return redirect("/")
-  }
-
-  // Verificar se o usuário é admin
-  const userRole = await getUserRole(session.user.id)
-  
-  if (userRole !== "ADMIN") {
-    return redirect("/")
-  }
-
+export default function AdminPage() {
   const router = useRouter()
   const [bookings, setBookings] = useState<Booking[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
-    if (session === null) {
-      router.push("/login")
+    const checkAuth = async () => {
+      const session = await getServerSession(authOptions)
+      if (!session?.user) {
+        router.push("/login")
+        return
+      }
+
+      const userRole = await getUserRole(session.user.id)
+      if (userRole !== "ADMIN") {
+        router.push("/")
+        return
+      }
+
+      setIsAdmin(true)
     }
-  }, [session, router])
+
+    checkAuth()
+  }, [router])
 
   useEffect(() => {
     const fetchBookings = async () => {
+      if (!isAdmin) return
+
       try {
         const response = await fetch("/api/admin/bookings")
         if (!response.ok) {
@@ -68,7 +71,7 @@ export default async function AdminPage() {
     }
 
     fetchBookings()
-  }, [])
+  }, [isAdmin])
 
   const handleCancelBooking = async (bookingId: string) => {
     try {
@@ -87,59 +90,42 @@ export default async function AdminPage() {
     }
   }
 
-  if (session === null || isLoading) {
+  if (isLoading) {
     return <div>Carregando...</div>
   }
 
+  if (!isAdmin) {
+    return null
+  }
+
   return (
-    <>
-      <Header />
-      <div className="container mx-auto p-5">
-        <h1 className="mb-6 text-2xl font-bold">Painel Administrativo</h1>
-
-        <div className="rounded-lg border p-5">
-          <h2 className="mb-4 text-lg font-bold">Agendamentos</h2>
-          
-          <div className="space-y-4">
-            {bookings.length === 0 ? (
-              <p className="text-center text-gray-500">Nenhum agendamento encontrado</p>
-            ) : (
-              bookings.map((booking) => (
-                <div
-                  key={booking.id}
-                  className="flex flex-col rounded-lg border p-4 shadow-sm"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-bold">{booking.service.barbershop.name}</p>
-                      <p className="text-sm text-gray-500">Serviço: {booking.service.name}</p>
-                      <p className="text-sm text-gray-500">
-                        Cliente: {booking.user.name} ({booking.user.email})
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Data: {new Date(booking.date).toLocaleString("pt-BR")}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Valor: {new Intl.NumberFormat("pt-BR", {
-                          style: "currency",
-                          currency: "BRL"
-                        }).format(booking.service.price)}
-                      </p>
-                    </div>
-
-                    <Button
-                      variant="destructive"
-                      onClick={() => handleCancelBooking(booking.id)}
-                    >
-                      Cancelar
-                    </Button>
-                  </div>
-                </div>
-              ))
-            )}
+    <div className="container mx-auto p-5">
+      <h1 className="mb-4 text-2xl font-bold">Painel Administrativo</h1>
+      <div className="space-y-4">
+        {bookings.map((booking) => (
+          <div
+            key={booking.id}
+            className="rounded-lg border p-4 shadow-sm"
+          >
+            <div className="mb-2">
+              <h2 className="font-semibold">{booking.service.barbershop.name}</h2>
+              <p className="text-sm text-gray-500">{booking.service.name}</p>
+            </div>
+            <div className="mb-2">
+              <p className="text-sm">Cliente: {booking.user.name}</p>
+              <p className="text-sm">Email: {booking.user.email}</p>
+              <p className="text-sm">Data: {booking.date}</p>
+              <p className="text-sm">Valor: R$ {booking.service.price.toFixed(2)}</p>
+            </div>
+            <Button
+              variant="destructive"
+              onClick={() => handleCancelBooking(booking.id)}
+            >
+              Cancelar
+            </Button>
           </div>
-        </div>
+        ))}
       </div>
-    </>
+    </div>
   )
 } 
