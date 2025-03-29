@@ -11,7 +11,6 @@ import { signOut, useSession } from "next-auth/react"
 import { Avatar, AvatarImage } from "./ui/avatar"
 import SignInDialog from "./sign-in-dialog"
 import { useEffect, useState } from "react"
-import { db } from "../_lib/prisma"
 
 const SidebarSheet = () => {
   const { data } = useSession()

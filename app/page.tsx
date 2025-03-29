@@ -12,7 +12,6 @@ import { authOptions } from "./_lib/auth"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { getConfirmedBookings } from "./_data/get-confirmed-bookings"
-import { Scissors, Clock, Award, MapPin } from "lucide-react"
 
 const Home = async () => {
   const session = await getServerSession(authOptions)

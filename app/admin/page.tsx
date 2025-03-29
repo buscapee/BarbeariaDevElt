@@ -6,6 +6,9 @@ import { useRouter } from "next/navigation"
 import Header from "../_components/header"
 import { Button } from "../_components/ui/button"
 import { toast } from "sonner"
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import { redirect } from "next/navigation"
 
 interface Booking {
   id: string
@@ -24,17 +27,29 @@ interface Booking {
   }
 }
 
-export default function AdminPage() {
-  const { data: session, status } = useSession()
+export default async function AdminPage() {
+  const session = await getServerSession(authOptions)
+
+  if (!session?.user) {
+    return redirect("/")
+  }
+
+  // Verificar se o usuário é admin
+  const userRole = await getUserRole(session.user.id)
+  
+  if (userRole !== "ADMIN") {
+    return redirect("/")
+  }
+
   const router = useRouter()
   const [bookings, setBookings] = useState<Booking[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    if (status === "unauthenticated") {
+    if (session === null) {
       router.push("/login")
     }
-  }, [status, router])
+  }, [session, router])
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -72,7 +87,7 @@ export default function AdminPage() {
     }
   }
 
-  if (status === "loading" || isLoading) {
+  if (session === null || isLoading) {
     return <div>Carregando...</div>
   }
 
