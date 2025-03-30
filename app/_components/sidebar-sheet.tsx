@@ -12,6 +12,13 @@ import { Avatar, AvatarImage } from "./ui/avatar"
 import SignInDialog from "./sign-in-dialog"
 import { useEffect, useState } from "react"
 
+interface SessionUser {
+  id: string
+  name?: string | null
+  email?: string | null
+  image?: string | null
+}
+
 const SidebarSheet = () => {
   const { data } = useSession()
   const [isAdmin, setIsAdmin] = useState(false)
@@ -19,7 +26,7 @@ const SidebarSheet = () => {
 
   useEffect(() => {
     const checkAdminStatus = async () => {
-      if (data?.user?.id) {
+      if (data?.user) {
         const response = await fetch("/api/user/role")
         if (response.ok) {
           const { role } = await response.json()
@@ -29,7 +36,7 @@ const SidebarSheet = () => {
     }
 
     checkAdminStatus()
-  }, [data?.user?.id])
+  }, [data?.user])
 
   return (
     <SheetContent className="overflow-y-auto">
@@ -41,7 +48,7 @@ const SidebarSheet = () => {
         {data?.user ? (
           <div className="flex items-center gap-2">
             <Avatar>
-              <AvatarImage src={data?.user?.image ?? ""} />
+              <AvatarImage src={data.user.image ?? ""} />
             </Avatar>
 
             <div>
