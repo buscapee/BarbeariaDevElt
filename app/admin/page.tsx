@@ -6,7 +6,6 @@ import { Button } from "../_components/ui/button"
 import { toast } from "sonner"
 import { authOptions } from "../_lib/auth"
 import { getServerSession } from "next-auth"
-import { redirect } from "next/navigation"
 import { getUserRole } from "../_actions/get-user-role"
 
 interface Booking {
