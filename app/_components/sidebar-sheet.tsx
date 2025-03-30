@@ -12,13 +12,6 @@ import { Avatar, AvatarImage } from "./ui/avatar"
 import SignInDialog from "./sign-in-dialog"
 import { useEffect, useState } from "react"
 
-interface SessionUser {
-  id: string
-  name?: string | null
-  email?: string | null
-  image?: string | null
-}
-
 const SidebarSheet = () => {
   const { data } = useSession()
   const [isAdmin, setIsAdmin] = useState(false)
