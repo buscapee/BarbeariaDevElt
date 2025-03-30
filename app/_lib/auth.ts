@@ -5,6 +5,13 @@ import { Adapter } from "next-auth/adapters"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { compare } from "bcryptjs"
 
+interface User {
+  id: string
+  name?: string | null
+  email?: string | null
+  image?: string | null
+}
+
 export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(db) as Adapter,
   providers: [
@@ -56,7 +63,7 @@ export const authOptions: AuthOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id as string
+        (session.user as User).id = token.id as string
       }
       return session
     },
